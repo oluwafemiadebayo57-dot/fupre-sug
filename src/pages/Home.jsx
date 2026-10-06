@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { newsItems } from '../data/news';
 import sugLogo from '../assets/sug-logo.png';
-import fupreLogo from '../assets/fupre-logo.png';
 
 const stats = [
   { label: "Executive Members", value: "11", icon: Users },
@@ -53,16 +52,6 @@ export default function Home() {
     <div>
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden bg-gradient-to-br from-fupre-navy via-fupre-blue to-fupre-navy text-white">
-
-        {/* Giant watermark FUPRE logo */}
-        <img
-          src={fupreLogo}
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none select-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[120%] w-auto max-w-none opacity-[0.15] grayscale z-0"
-        />
-
-        {/* Hero content on top */}
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 md:py-24 text-center">
 
           {/* SUG Logo chip */}
