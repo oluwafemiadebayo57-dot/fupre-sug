@@ -1,0 +1,118 @@
+// ============================================
+// FUPRE SUG EXECUTIVES DATA — 2025/2026 (Team Aurora)
+// Photos go in /public/photos/executives/
+// Filename should match the "photo" field below.
+// ============================================
+
+export const currentExecutives = [
+  {
+    id: 1,
+    name: "Akpofure Ben Ejiro",
+    position: "President",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/akpofure-ben-ejiro.jpg",
+    email: "president@fupresug.org",
+  },
+  {
+    id: 2,
+    name: "Emmanuel Oseji Chukwunomnazu",
+    position: "Vice President",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/emmanuel-oseji-chukwunomnazu.jpg",
+    email: "vp@fupresug.org",
+  },
+  {
+    id: 3,
+    name: "EshEnake Mirabel Urhinrhinosonobrigue",
+    position: "Secretary General",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/eshenake-mirabel.jpg",
+    email: "secretary@fupresug.org",
+  },
+  {
+    id: 4,
+    name: "Ephraim Ogbaji-Pat",
+    position: "Director of Welfare",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/ephraim-ogbaji-pat.jpg",
+    email: "welfare@fupresug.org",
+  },
+  {
+    id: 5,
+    name: "Aleke Kewwe",
+    position: "Director of Information",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/aleke-kewwe.jpg",
+    email: "info@fupresug.org",
+  },
+  {
+    id: 6,
+    name: "Walker Clinton",
+    position: "Director of Sport",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/walker-clinton.jpg",
+    email: "sports@fupresug.org",
+  },
+  {
+    id: 7,
+    name: "Okafor Promise Chukwuemeke",
+    position: "Director of Socials",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/okafor-promise.jpg",
+    email: "social@fupresug.org",
+  },
+  {
+    id: 8,
+    name: "Onokpasa Godswill",
+    position: "Director of Transport",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/onokpasa-godswill.jpg",
+    email: "transport@fupresug.org",
+  },
+  {
+    id: 9,
+    name: "Owolabi Oluwafemi Ayomide",
+    position: "Assistant Secretary General",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/owolabi-oluwafemi.jpg",
+    email: "asstsecretary@fupresug.org",
+  },
+  {
+    id: 10,
+    name: "Emmanuel Ogbolu",
+    position: "Assistant Director of Welfare",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/emmanuel-ogbolu.jpg",
+    email: "asstwelfare@fupresug.org",
+  },
+  {
+    id: 11,
+    name: "Fejofawei Prosper",
+    position: "Assistant Director of Sport",
+    level: "—",
+    department: "—",
+    photo: "/photos/executives/fejofawei-prosper.jpg",
+    email: "asstsports@fupresug.org",
+  },
+];
+
+export const pastExecutives = [
+  {
+    tenure: "2024/2025",
+    members: [],
+  },
+  {
+    tenure: "2023/2024",
+    members: [],
+  },
+];
