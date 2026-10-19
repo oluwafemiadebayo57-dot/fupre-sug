@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { Send, Search, CheckCircle2, AlertCircle, Clock, Shield } from 'lucide-react';
+import { Send, Search, CheckCircle2, AlertCircle, Clock, Shield, Loader2 } from 'lucide-react';
+// Import Firebase functions
+import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 
 const CATEGORIES = [
   'Academic',
@@ -19,36 +22,62 @@ export default function Complaints() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [ticketId, setTicketId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Generate a unique ID
     const id = 'SUG-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-    const complaint = {
+    
+    const complaintData = {
       ...form,
       id,
       date: new Date().toISOString(),
       status: 'Pending',
     };
 
-    // TODO: Replace with backend API call (Firebase) after approval
-    const existing = JSON.parse(localStorage.getItem('fupre_complaints') || '[]');
-    existing.push(complaint);
-    localStorage.setItem('fupre_complaints', JSON.stringify(existing));
-
-    setTicketId(id);
-    setSubmitted(true);
+    try {
+      // Save to Firebase Firestore
+      await addDoc(collection(db, "complaints"), complaintData);
+      setTicketId(id);
+      setSubmitted(true);
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      alert("Failed to submit complaint. Please check your internet connection and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchId.trim()) return;
-    const existing = JSON.parse(localStorage.getItem('fupre_complaints') || '[]');
-    const found = existing.find(
-      c => c.id.toLowerCase() === searchId.trim().toLowerCase()
-    );
-    setSearchResult(found || 'notfound');
+    setIsSearching(true);
+    setSearchResult(null);
+
+    try {
+      // Search Firebase Firestore
+      const q = query(collection(db, "complaints"), where("id", "==", searchId.trim().toUpperCase()));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        setSearchResult('notfound');
+      } else {
+        // Get the first result
+        const foundComplaint = querySnapshot.docs[0].data();
+        setSearchResult(foundComplaint);
+      }
+    } catch (error) {
+      console.error("Error searching document: ", error);
+      alert("Failed to search. Please check your internet connection.");
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const resetForm = () => {
@@ -67,7 +96,7 @@ export default function Complaints() {
             Complaint Submitted
           </h2>
           <p className="text-gray-600 mb-6">
-            Your complaint has been received. Save this ID to track its status:
+            Your complaint has been securely sent to the SUG. Save this ID to track its status:
           </p>
 
           <div className="bg-fupre-cream border-2 border-dashed border-fupre-gold rounded-xl p-6 mb-6">
@@ -81,8 +110,7 @@ export default function Complaints() {
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800 text-left mb-6">
             <AlertCircle size={16} className="inline mr-1" />
-            <strong>Screenshot or write this ID down.</strong> You'll need it to
-            check your complaint's status.
+            <strong>Screenshot or write this ID down.</strong> You'll need it to check your complaint's status.
           </div>
 
           <button
@@ -104,7 +132,7 @@ export default function Complaints() {
       </h1>
       <p className="text-gray-600 mb-8">
         Your voice matters. Submit complaints anonymously or with your identity —
-        every issue is reviewed.
+        every issue is reviewed by the SUG.
       </p>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -177,9 +205,14 @@ export default function Complaints() {
 
           <button
             type="submit"
-            className="w-full bg-fupre-navy text-white py-3 rounded-lg font-semibold hover:bg-fupre-light transition flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+            className="w-full bg-fupre-navy text-white py-3 rounded-lg font-semibold hover:bg-fupre-light transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <Send size={18} /> Submit Complaint
+            {isSubmitting ? (
+              <><Loader2 size={18} className="animate-spin" /> Submitting...</>
+            ) : (
+              <><Send size={18} /> Submit Complaint</>
+            )}
           </button>
         </form>
 
@@ -201,16 +234,17 @@ export default function Complaints() {
               />
               <button
                 onClick={handleSearch}
-                className="bg-fupre-gold text-fupre-navy px-5 rounded-lg font-semibold hover:bg-yellow-500 transition"
+                disabled={isSearching}
+                className="bg-fupre-gold text-fupre-navy px-5 rounded-lg font-semibold hover:bg-yellow-500 transition flex items-center justify-center min-w-[80px]"
               >
-                Track
+                {isSearching ? <Loader2 size={18} className="animate-spin" /> : "Track"}
               </button>
             </div>
 
             {searchResult === 'notfound' && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
                 <AlertCircle size={16} />
-                No complaint found with that ID on this device.
+                No complaint found with that ID.
               </div>
             )}
 
@@ -241,17 +275,6 @@ export default function Complaints() {
               Director reviews every submission and forwards valid issues to
               management.
             </p>
-          </div>
-
-          {/* Info card 2 */}
-          <div className="bg-white border-l-4 border-fupre-gold rounded-lg p-4 text-sm">
-            <p className="font-semibold text-fupre-navy mb-1">What happens next?</p>
-            <ul className="text-gray-600 space-y-1 list-disc list-inside">
-              <li>Complaint is logged with a unique ID</li>
-              <li>Welfare Director reviews within 48 hours</li>
-              <li>Status updates as action is taken</li>
-              <li>Serious issues escalate to management</li>
-            </ul>
           </div>
         </div>
       </div>
