@@ -8,8 +8,9 @@ import Complaints from './pages/Complaints';
 import News from './pages/News';
 import Constitution from './pages/Constitution';
 import Partner from './pages/Partner';
+import Events from './pages/Events'; // <-- Added Events import
 
-// New Admin Imports
+// Admin Imports
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/executives" element={<Executives />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/events" element={<Events />} /> {/* <-- Added Events route */}
             <Route path="/complaints" element={<Complaints />} />
             <Route path="/news" element={<News />} />
             <Route path="/constitution" element={<Constitution />} />

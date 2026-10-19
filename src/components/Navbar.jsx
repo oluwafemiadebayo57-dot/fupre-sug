@@ -8,6 +8,7 @@ const links = [
   { path: '/', label: 'Home' },
   { path: '/executives', label: 'Executives' },
   { path: '/projects', label: 'Projects' },
+  { path: '/events', label: 'Events' }, // <-- Added Events Link
   { path: '/complaints', label: 'Complaints' },
   { path: '/news', label: 'News' },
   { path: '/constitution', label: 'Constitution' },
@@ -54,12 +55,12 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop links */}
-          <div className="hidden md:flex gap-6">
+          <div className="hidden lg:flex gap-5">
             {links.map(l => (
               <Link
                 key={l.path}
                 to={l.path}
-                className={`hover:text-fupre-gold transition ${
+                className={`hover:text-fupre-gold transition text-sm ${
                   location.pathname === l.path ? 'text-fupre-gold font-semibold' : ''
                 }`}
               >
@@ -69,20 +70,22 @@ export default function Navbar() {
           </div>
 
           {/* Mobile menu button */}
-          <button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+          <button className="lg:hidden" onClick={() => setOpen(!open)} aria-label="Toggle menu">
             {open ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
         {/* Mobile dropdown */}
         {open && (
-          <div className="md:hidden pb-4 flex flex-col gap-3">
+          <div className="lg:hidden pb-4 flex flex-col gap-3">
             {links.map(l => (
               <Link
                 key={l.path}
                 to={l.path}
                 onClick={() => setOpen(false)}
-                className="hover:text-fupre-gold"
+                className={`hover:text-fupre-gold transition ${
+                  location.pathname === l.path ? 'text-fupre-gold font-semibold' : ''
+                }`}
               >
                 {l.label}
               </Link>
