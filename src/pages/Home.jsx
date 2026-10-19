@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users,
@@ -9,8 +10,10 @@ import {
   Shield,
   Target,
   Heart,
+  Loader2,
 } from 'lucide-react';
-import { newsItems } from '../data/news';
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { db } from "../firebase";
 import sugLogo from '../assets/sug-logo.png';
 
 const stats = [
@@ -48,6 +51,26 @@ const quickLinks = [
 ];
 
 export default function Home() {
+  const [latestNews, setLatestNews] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(true);
+
+  // Fetch the latest 3 news items from Firebase
+  useEffect(() => {
+    const fetchLatestNews = async () => {
+      try {
+        const q = query(collection(db, "news"), orderBy("date", "desc"));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setLatestNews(data.slice(0, 3)); // Only keep the 3 newest
+      } catch (error) {
+        console.error("Error fetching home news:", error);
+      } finally {
+        setLoadingNews(false);
+      }
+    };
+    fetchLatestNews();
+  }, []);
+
   return (
     <div>
       {/* ===== HERO ===== */}
@@ -180,28 +203,42 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {newsItems.slice(0, 3).map(item => (
-            <Link
-              key={item.id}
-              to="/news"
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition border border-gray-100"
-            >
-              <div className="h-2 bg-fupre-gold"></div>
-              <div className="p-5">
-                <span className="text-xs font-semibold text-fupre-navy bg-fupre-navy/10 px-2 py-1 rounded-full">
-                  {item.category}
-                </span>
-                <h3 className="font-bold text-gray-800 mt-3 mb-2 leading-snug">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-gray-600 line-clamp-3">
-                  {item.excerpt}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {loadingNews ? (
+          <div className="flex justify-center py-10"><Loader2 className="animate-spin text-fupre-navy" size={32} /></div>
+        ) : latestNews.length === 0 ? (
+          <p className="text-gray-500 italic">No news has been published yet.</p>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6">
+            {latestNews.map(item => (
+              <Link
+                key={item.id}
+                to="/news"
+                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition border border-gray-100 flex flex-col"
+              >
+                {/* 👇 ADDED: Image for the Home page card 👇 */}
+                {item.imageUrl && (
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.title} 
+                    className="w-full h-40 object-contain bg-gray-100 p-2" 
+                  />
+                )}
+                
+                <div className="p-5 flex flex-col flex-1">
+                  <span className="text-xs font-semibold text-fupre-navy bg-fupre-navy/10 px-2 py-1 rounded-full self-start">
+                    {item.category}
+                  </span>
+                  <h3 className="font-bold text-gray-800 mt-3 mb-2 leading-snug line-clamp-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 line-clamp-3 flex-1">
+                    {item.excerpt}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ===== PARTNER CTA ===== */}

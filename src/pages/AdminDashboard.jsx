@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from "../firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, doc, updateDoc, orderBy, query } from "firebase/firestore";
-import { LogOut, Loader2, CheckCircle2, Shield, MessageSquare, Newspaper } from 'lucide-react';
+import { collection, getDocs, doc, updateDoc, orderBy, query, addDoc } from "firebase/firestore";
+import { LogOut, Loader2, CheckCircle2, Shield, MessageSquare, Newspaper, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [complaints, setComplaints] = useState([]);
@@ -12,8 +12,16 @@ export default function AdminDashboard() {
   const [userRole, setUserRole] = useState('');
   const navigate = useNavigate();
 
+  // News Form State
+  const [newsTitle, setNewsTitle] = useState('');
+  const [newsCategory, setNewsCategory] = useState('Update');
+  const [newsExcerpt, setNewsExcerpt] = useState('');
+  const [newsBody, setNewsBody] = useState('');
+  const [newsImage, setNewsImage] = useState(null); // <-- Added Image State
+  const [publishing, setPublishing] = useState(false);
+  const [publishSuccess, setPublishSuccess] = useState(false);
+
   useEffect(() => {
-    // 1. Check who is logged in
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         if (user.email.includes('welfare')) setUserRole('Welfare Director');
@@ -21,11 +29,10 @@ export default function AdminDashboard() {
         else if (user.email.includes('president')) setUserRole('President');
         else setUserRole('Executive Admin');
       } else {
-        navigate('/admin'); // Kick them out if not logged in
+        navigate('/admin');
       }
     });
 
-    // 2. Fetch complaints
     const fetchComplaints = async () => {
       try {
         const q = query(collection(db, "complaints"), orderBy("date", "desc"));
@@ -59,6 +66,63 @@ export default function AdminDashboard() {
     }
   };
 
+  const handlePublishNews = async (e) => {
+    e.preventDefault();
+    setPublishing(true);
+    setPublishSuccess(false);
+
+    try {
+      let imageUrl = "";
+
+      // 1. Upload image to ImgBB (if selected)
+      if (newsImage) {
+        const formData = new FormData();
+        formData.append("image", newsImage);
+        
+        // Use the API key from the .env file
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          imageUrl = data.data.url; // Get the live image URL from ImgBB
+        } else {
+          throw new Error("Image upload failed. Check your API key.");
+        }
+      }
+
+      // 2. Save text + image URL to Firestore
+      await addDoc(collection(db, "news"), {
+        title: newsTitle,
+        category: newsCategory,
+        excerpt: newsExcerpt,
+        body: newsBody,
+        imageUrl: imageUrl, // Save the ImgBB URL
+        date: new Date().toISOString(),
+      });
+      
+      setPublishSuccess(true);
+      setNewsTitle('');
+      setNewsCategory('Update');
+      setNewsExcerpt('');
+      setNewsBody('');
+      setNewsImage(null);
+      
+      // Reset the file input visually
+      e.target.reset();
+
+      setTimeout(() => setPublishSuccess(false), 3000);
+    } catch (error) {
+      alert("Error publishing news. Check console.");
+      console.error(error);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   if (loading) return <div className="min-h-[60vh] flex justify-center items-center"><Loader2 className="animate-spin text-fupre-navy" size={48} /></div>;
 
   return (
@@ -77,20 +141,78 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* Info Director specific view */}
-      {(userRole === 'Information Director' || userRole === 'President') && (
-        <div className="bg-fupre-navy text-white rounded-xl p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div>
-            <h2 className="text-xl font-bold mb-1">News & Announcements Manager</h2>
-            <p className="text-sm text-gray-300">Publish official updates to the student body.</p>
-          </div>
-          <button className="bg-fupre-gold text-fupre-navy px-4 py-2 rounded-lg font-bold hover:bg-yellow-500 flex items-center gap-2">
-            <Newspaper size={18} /> Create New Post (Coming Soon)
-          </button>
+      {/* NEWS MANAGER - Only for Info Director & President */}
+      {(userRole === 'Information Director' || userRole === 'President' || userRole === 'Executive Admin') && (
+        <div className="bg-fupre-navy text-white rounded-xl p-6 mb-10 shadow-lg">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Newspaper className="text-fupre-gold" /> Publish Official News
+          </h2>
+          
+          {publishSuccess && (
+            <div className="bg-green-500 text-white p-3 rounded-lg mb-4 text-sm flex items-center gap-2">
+              <CheckCircle2 size={16} /> News published successfully! It is now live on the website.
+            </div>
+          )}
+
+          <form onSubmit={handlePublishNews} className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <input 
+                required 
+                value={newsTitle} 
+                onChange={e => setNewsTitle(e.target.value)}
+                placeholder="News Title (e.g., SUG Week Announced)" 
+                className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none"
+              />
+              <select 
+                value={newsCategory} 
+                onChange={e => setNewsCategory(e.target.value)}
+                className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none"
+              >
+                <option value="Update">Update</option>
+                <option value="Academic">Academic</option>
+                <option value="Social">Social</option>
+                <option value="Welfare">Welfare</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+            <input 
+              required 
+              value={newsExcerpt} 
+              onChange={e => setNewsExcerpt(e.target.value)}
+              placeholder="Short Excerpt (Shows on the Home page card)" 
+              className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none"
+            />
+            <textarea 
+              required 
+              rows={4} 
+              value={newsBody} 
+              onChange={e => setNewsBody(e.target.value)}
+              placeholder="Full news article text..." 
+              className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none resize-none"
+            />
+            
+            {/* Image Upload Field */}
+            <div className="bg-white/10 p-3 rounded-lg border border-white/20">
+              <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-fupre-gold">
+                <ImageIcon size={16} /> Attach Cover Image (Optional)
+              </label>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={e => setNewsImage(e.target.files[0])}
+                className="w-full text-sm text-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-fupre-gold file:text-fupre-navy hover:file:bg-yellow-500 cursor-pointer"
+              />
+              <p className="text-xs text-gray-400 mt-2">Keep it under 2MB for fast loading.</p>
+            </div>
+
+            <button type="submit" disabled={publishing} className="bg-fupre-gold text-fupre-navy px-6 py-2 rounded-lg font-bold hover:bg-yellow-500 transition flex items-center gap-2">
+              {publishing ? <><Loader2 className="animate-spin" size={18} /> Uploading...</> : <><Newspaper size={18} /> Publish News</>}
+            </button>
+          </form>
         </div>
       )}
 
-      {/* Complaints view for everyone, but heavily prioritized for Welfare */}
+      {/* Complaints Manager */}
       <div className="mb-6 flex items-center gap-2">
         <MessageSquare className="text-fupre-navy" />
         <h2 className="text-xl font-bold text-gray-800">Student Complaints</h2>
@@ -106,7 +228,6 @@ export default function AdminDashboard() {
         <div className="grid gap-4">
           {complaints.map(c => (
             <div key={c.docId} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
-              
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className="font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-bold">{c.id}</span>
@@ -117,7 +238,6 @@ export default function AdminDashboard() {
                 <p className="text-gray-600 text-sm mt-1">{c.message}</p>
               </div>
 
-              {/* Status Box */}
               <div className="bg-gray-50 p-4 rounded-lg border min-w-[200px] w-full md:w-auto">
                 <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Update Status</p>
                 <select 
@@ -135,7 +255,6 @@ export default function AdminDashboard() {
                   <option value="Resolved">Resolved</option>
                 </select>
               </div>
-
             </div>
           ))}
         </div>
