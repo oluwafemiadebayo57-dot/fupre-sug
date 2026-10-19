@@ -13,6 +13,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/akpofure-ben-ejiro.jpg",
     email: "president@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 2,
@@ -22,6 +23,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/emmanuel-oseji-chukwunomnazu.jpg",
     email: "vp@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 3,
@@ -31,6 +33,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/eshenake-mirabel.jpg",
     email: "secretary@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 4,
@@ -40,6 +43,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/ephraim-ogbaji-pat.jpg",
     email: "welfare@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 5,
@@ -49,6 +53,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/aleke-kewwe.jpg",
     email: "info@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 6,
@@ -58,6 +63,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/walker-clinton.jpg",
     email: "sports@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 7,
@@ -67,6 +73,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/okafor-promise.jpg",
     email: "social@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 8,
@@ -76,6 +83,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/onokpasa-godswill.jpg",
     email: "transport@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 9,
@@ -85,6 +93,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/owolabi-oluwafemi.jpg",
     email: "asstsecretary@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 10,
@@ -94,6 +103,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/emmanuel-ogbolu.jpg",
     email: "asstwelfare@fupresug.org",
+    whatsapp: "2348012345678",
   },
   {
     id: 11,
@@ -103,6 +113,7 @@ export const currentExecutives = [
     department: "—",
     photo: "/photos/executives/fejofawei-prosper.jpg",
     email: "asstsports@fupresug.org",
+    whatsapp: "2348012345678",
   },
 ];
 

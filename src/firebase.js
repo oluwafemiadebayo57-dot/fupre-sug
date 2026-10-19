@@ -1,8 +1,11 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
+// REPLACE THIS OBJECT WITH THE ONE YOU JUST COPIED
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyA01-uxzM4S8yB8nS0kxz-y1405JQc9ig",
+  apiKey: "AIzaSyA0l-uxZm4SBy8bNS0kxz-y1405JQc9qIg",
   authDomain: "fupre-sug.firebaseapp.com",
   projectId: "fupre-sug",
   storageBucket: "fupre-sug.firebasestorage.app",
@@ -11,8 +14,6 @@ const firebaseConfig = {
   measurementId: "G-HM4YHH1705"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore database
 export const db = getFirestore(app);
+export const auth = getAuth(app);

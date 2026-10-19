@@ -9,6 +9,10 @@ import News from './pages/News';
 import Constitution from './pages/Constitution';
 import Partner from './pages/Partner';
 
+// New Admin Imports
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
+
 export default function App() {
   return (
     <Router>
@@ -23,6 +27,10 @@ export default function App() {
             <Route path="/news" element={<News />} />
             <Route path="/constitution" element={<Constitution />} />
             <Route path="/partner" element={<Partner />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Routes>
         </main>
         <Footer />
