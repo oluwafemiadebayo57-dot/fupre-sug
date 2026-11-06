@@ -52,23 +52,30 @@ const quickLinks = [
 
 export default function Home() {
   const [latestNews, setLatestNews] = useState([]);
-  const [loadingNews, setLoadingNews] = useState(true);
+  const [partners, setPartners] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
 
-  // Fetch the latest 3 news items from Firebase
+  // Fetch News & Partners
   useEffect(() => {
-    const fetchLatestNews = async () => {
+    const fetchHomeData = async () => {
       try {
-        const q = query(collection(db, "news"), orderBy("date", "desc"));
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setLatestNews(data.slice(0, 3)); // Only keep the 3 newest
+        // Fetch News
+        const newsQuery = query(collection(db, "news"), orderBy("date", "desc"));
+        const newsSnapshot = await getDocs(newsQuery);
+        const newsData = newsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setLatestNews(newsData.slice(0, 3));
+
+        // Fetch Partners
+        const partnersSnapshot = await getDocs(collection(db, "partners"));
+        setPartners(partnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
       } catch (error) {
-        console.error("Error fetching home news:", error);
+        console.error("Error fetching data:", error);
       } finally {
-        setLoadingNews(false);
+        setLoadingData(false);
       }
     };
-    fetchLatestNews();
+    fetchHomeData();
   }, []);
 
   return (
@@ -76,15 +83,10 @@ export default function Home() {
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden bg-gradient-to-br from-fupre-navy via-fupre-blue to-fupre-navy text-white">
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 md:py-24 text-center">
-
           {/* SUG Logo chip */}
           <div className="flex justify-center mb-6">
             <div className="bg-white rounded-full p-3 md:p-4 shadow-2xl ring-4 ring-fupre-gold/40 w-24 h-24 md:w-32 md:h-32 flex items-center justify-center">
-              <img
-                src={sugLogo}
-                alt="FUPRE SUG Logo"
-                className="w-full h-full object-contain rounded-full"
-              />
+              <img src={sugLogo} alt="FUPRE SUG Logo" className="w-full h-full object-contain rounded-full" />
             </div>
           </div>
 
@@ -102,16 +104,10 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/complaints"
-              className="bg-fupre-gold text-fupre-navy px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition inline-flex items-center justify-center gap-2"
-            >
+            <Link to="/complaints" className="bg-fupre-gold text-fupre-navy px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition inline-flex items-center justify-center gap-2">
               <MessageSquare size={18} /> Submit a Complaint
             </Link>
-            <Link
-              to="/executives"
-              className="bg-white/10 border border-white/30 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/20 transition inline-flex items-center justify-center gap-2"
-            >
+            <Link to="/executives" className="bg-white/10 border border-white/30 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/20 transition inline-flex items-center justify-center gap-2">
               Meet the Executives <ArrowRight size={18} />
             </Link>
           </div>
@@ -124,9 +120,7 @@ export default function Home() {
           {stats.map(s => (
             <div key={s.label} className="text-center">
               <s.icon className="mx-auto text-fupre-navy mb-2" size={24} />
-              <p className="text-2xl md:text-3xl font-black text-fupre-navy">
-                {s.value}
-              </p>
+              <p className="text-2xl md:text-3xl font-black text-fupre-navy">{s.value}</p>
               <p className="text-xs md:text-sm text-gray-500">{s.label}</p>
             </div>
           ))}
@@ -135,20 +129,12 @@ export default function Home() {
 
       {/* ===== QUICK LINKS ===== */}
       <section className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-2xl md:text-3xl font-bold text-fupre-navy mb-2 text-center">
-          What You Can Do Here
-        </h2>
-        <p className="text-gray-600 text-center mb-10">
-          Everything the SUG offers, in one place.
-        </p>
+        <h2 className="text-2xl md:text-3xl font-bold text-fupre-navy mb-2 text-center">What You Can Do Here</h2>
+        <p className="text-gray-600 text-center mb-10">Everything the SUG offers, in one place.</p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {quickLinks.map(q => (
-            <Link
-              key={q.to}
-              to={q.to}
-              className="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl border border-gray-100 transition hover:-translate-y-1"
-            >
+            <Link key={q.to} to={q.to} className="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl border border-gray-100 transition hover:-translate-y-1">
               <div className="bg-fupre-navy/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-fupre-navy transition">
                 <q.icon className="text-fupre-navy group-hover:text-fupre-gold transition" size={24} />
               </div>
@@ -165,23 +151,17 @@ export default function Home() {
           <div className="text-center">
             <Target className="mx-auto text-fupre-navy mb-3" size={32} />
             <h3 className="font-bold text-fupre-navy mb-2">Our Mission</h3>
-            <p className="text-sm text-gray-600">
-              To protect the welfare and interests of every FUPRE student.
-            </p>
+            <p className="text-sm text-gray-600">To protect the welfare and interests of every FUPRE student.</p>
           </div>
           <div className="text-center">
             <Shield className="mx-auto text-fupre-navy mb-3" size={32} />
             <h3 className="font-bold text-fupre-navy mb-2">Our Commitment</h3>
-            <p className="text-sm text-gray-600">
-              Transparency, accountability, and student-first leadership.
-            </p>
+            <p className="text-sm text-gray-600">Transparency, accountability, and student-first leadership.</p>
           </div>
           <div className="text-center">
             <Heart className="mx-auto text-fupre-navy mb-3" size={32} />
             <h3 className="font-bold text-fupre-navy mb-2">Our Promise</h3>
-            <p className="text-sm text-gray-600">
-              Every complaint is heard. Every project is tracked.
-            </p>
+            <p className="text-sm text-gray-600">Every complaint is heard. Every project is tracked.</p>
           </div>
         </div>
       </section>
@@ -190,50 +170,29 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-fupre-navy mb-1">
-              Latest News
-            </h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-fupre-navy mb-1">Latest News</h2>
             <p className="text-gray-600 text-sm">Straight from the SUG.</p>
           </div>
-          <Link
-            to="/news"
-            className="text-fupre-navy font-semibold hover:text-fupre-gold transition flex items-center gap-1 text-sm"
-          >
+          <Link to="/news" className="text-fupre-navy font-semibold hover:text-fupre-gold transition flex items-center gap-1 text-sm">
             View All <ArrowRight size={16} />
           </Link>
         </div>
 
-        {loadingNews ? (
+        {loadingData ? (
           <div className="flex justify-center py-10"><Loader2 className="animate-spin text-fupre-navy" size={32} /></div>
         ) : latestNews.length === 0 ? (
           <p className="text-gray-500 italic">No news has been published yet.</p>
         ) : (
           <div className="grid md:grid-cols-3 gap-6">
             {latestNews.map(item => (
-              <Link
-                key={item.id}
-                to="/news"
-                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition border border-gray-100 flex flex-col"
-              >
-                {/* 👇 ADDED: Image for the Home page card 👇 */}
+              <Link key={item.id} to="/news" className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition border border-gray-100 flex flex-col">
                 {item.imageUrl && (
-                  <img 
-                    src={item.imageUrl} 
-                    alt={item.title} 
-                    className="w-full h-40 object-contain bg-gray-100 p-2" 
-                  />
+                  <img src={item.imageUrl} alt={item.title} className="w-full h-40 object-contain bg-gray-100 p-2" />
                 )}
-                
                 <div className="p-5 flex flex-col flex-1">
-                  <span className="text-xs font-semibold text-fupre-navy bg-fupre-navy/10 px-2 py-1 rounded-full self-start">
-                    {item.category}
-                  </span>
-                  <h3 className="font-bold text-gray-800 mt-3 mb-2 leading-snug line-clamp-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 line-clamp-3 flex-1">
-                    {item.excerpt}
-                  </p>
+                  <span className="text-xs font-semibold text-fupre-navy bg-fupre-navy/10 px-2 py-1 rounded-full self-start">{item.category}</span>
+                  <h3 className="font-bold text-gray-800 mt-3 mb-2 leading-snug line-clamp-2">{item.title}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-3 flex-1">{item.excerpt}</p>
                 </div>
               </Link>
             ))}
@@ -241,22 +200,40 @@ export default function Home() {
         )}
       </section>
 
+      {/* ===== PARTNERS LOGO STRIP ===== */}
+      {partners.length > 0 && (
+        <section className="bg-white border-t border-gray-100 py-12">
+          <div className="max-w-6xl mx-auto px-4">
+            <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">
+              Trusted by our Partners
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
+              {partners.map(p => (
+                <a 
+                  key={p.id} 
+                  href={p.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition duration-300"
+                  title={p.name}
+                >
+                  <img src={p.logo} alt={p.name} className="h-12 md:h-16 w-auto object-contain" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ===== PARTNER CTA ===== */}
-      <section className="max-w-6xl mx-auto px-4 pb-16">
-        <div className="bg-gradient-to-r from-fupre-navy to-fupre-blue rounded-2xl p-8 md:p-12 text-white flex flex-col md:flex-row items-center gap-6">
+      <section className="max-w-6xl mx-auto px-4 py-16">
+        <div className="bg-gradient-to-r from-fupre-navy to-fupre-blue rounded-2xl p-8 md:p-12 text-white flex flex-col md:flex-row items-center gap-6 shadow-2xl">
           <Handshake size={64} className="text-fupre-gold shrink-0" />
           <div className="flex-1 text-center md:text-left">
-            <h2 className="text-2xl font-bold mb-1">
-              Interested in Partnering With Us?
-            </h2>
-            <p className="text-gray-200 text-sm">
-              Put your brand in front of thousands of FUPRE students.
-            </p>
+            <h2 className="text-2xl font-bold mb-1">Interested in Partnering With Us?</h2>
+            <p className="text-gray-200 text-sm">Put your brand in front of thousands of FUPRE students.</p>
           </div>
-          <Link
-            to="/partner"
-            className="bg-fupre-gold text-fupre-navy px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition whitespace-nowrap"
-          >
+          <Link to="/partner" className="bg-fupre-gold text-fupre-navy px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition whitespace-nowrap">
             See Packages
           </Link>
         </div>

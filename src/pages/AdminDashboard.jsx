@@ -2,8 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from "../firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, doc, updateDoc, orderBy, query, addDoc } from "firebase/firestore";
-import { LogOut, Loader2, CheckCircle2, Shield, MessageSquare, Newspaper, CalendarDays, Image as ImageIcon, Ticket } from 'lucide-react';
+import { collection, getDocs, doc, updateDoc, orderBy, query, addDoc, where } from "firebase/firestore";
+import { 
+  LogOut, Loader2, CheckCircle2, Shield, MessageSquare, Newspaper, 
+  CalendarDays, Image as ImageIcon, Ticket, UserPlus, Archive, 
+  FolderKanban, Handshake 
+} from 'lucide-react';
 
 export default function AdminDashboard() {
   const [complaints, setComplaints] = useState([]);
@@ -35,6 +39,37 @@ export default function AdminDashboard() {
   const [publishingEvent, setPublishingEvent] = useState(false);
   const [eventSuccess, setEventSuccess] = useState(false);
 
+  // --- EXECUTIVE STATE ---
+  const [execName, setExecName] = useState('');
+  const [execPosition, setExecPosition] = useState('');
+  const [execArm, setExecArm] = useState('Student Executive Council');
+  const [execLevel, setExecLevel] = useState('');
+  const [execDept, setExecDept] = useState('');
+  const [execWhatsapp, setExecWhatsapp] = useState('');
+  const [execEmail, setExecEmail] = useState('');
+  const [execImage, setExecImage] = useState(null);
+  const [publishingExec, setPublishingExec] = useState(false);
+  const [execSuccess, setExecSuccess] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+
+  // --- PROJECT STATE ---
+  const [projTitle, setProjTitle] = useState('');
+  const [projDesc, setProjDesc] = useState('');
+  const [projStatus, setProjStatus] = useState('Ongoing');
+  const [projProgress, setProjProgress] = useState(0);
+  const [projImage1, setProjImage1] = useState(null);
+  const [projImage2, setProjImage2] = useState(null);
+  const [publishingProj, setPublishingProj] = useState(false);
+  const [projSuccess, setProjSuccess] = useState(false);
+
+  // --- PARTNER STATE ---
+  const [partnerName, setPartnerName] = useState('');
+  const [partnerLink, setPartnerLink] = useState('');
+  const [partnerTier, setPartnerTier] = useState('Bronze');
+  const [partnerLogo, setPartnerLogo] = useState(null);
+  const [publishingPartner, setPublishingPartner] = useState(false);
+  const [partnerSuccess, setPartnerSuccess] = useState(false);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -50,12 +85,10 @@ export default function AdminDashboard() {
 
     const fetchData = async () => {
       try {
-        // Fetch Complaints
         const compQuery = query(collection(db, "complaints"), orderBy("date", "desc"));
         const compSnapshot = await getDocs(compQuery);
         setComplaints(compSnapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() })));
 
-        // Fetch Tickets
         const tickQuery = query(collection(db, "tickets"), orderBy("date", "desc"));
         const tickSnapshot = await getDocs(tickQuery);
         setTickets(tickSnapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() })));
@@ -124,13 +157,70 @@ export default function AdminDashboard() {
     } catch (error) { alert("Error creating event."); } finally { setPublishingEvent(false); }
   };
 
+  const handleAddExecutive = async (e) => {
+    e.preventDefault(); setPublishingExec(true); setExecSuccess(false);
+    try {
+      const imageUrl = await uploadToImgBB(execImage);
+      await addDoc(collection(db, "executives"), { 
+        name: execName, position: execPosition, arm: execArm, level: execLevel, 
+        department: execDept, whatsapp: execWhatsapp, email: execEmail, photo: imageUrl,
+        isCurrent: true, tenure: "2025/2026" 
+      });
+      setExecSuccess(true); setExecName(''); setExecPosition(''); setExecArm('Student Executive Council'); setExecLevel(''); setExecDept(''); setExecWhatsapp(''); setExecEmail(''); setExecImage(null); e.target.reset();
+      setTimeout(() => setExecSuccess(false), 3000);
+    } catch (error) { alert("Error adding executive."); } finally { setPublishingExec(false); }
+  };
+
+  const handlePublishProject = async (e) => {
+    e.preventDefault(); setPublishingProj(true); setProjSuccess(false);
+    try {
+      const img1Url = await uploadToImgBB(projImage1);
+      const img2Url = await uploadToImgBB(projImage2);
+
+      await addDoc(collection(db, "projects"), {
+        title: projTitle, description: projDesc, status: projStatus,
+        progress: projStatus === 'Ongoing' ? Number(projProgress) : 100,
+        image1: img1Url, image2: img2Url, date: new Date().toISOString()
+      });
+
+      setProjSuccess(true); setProjTitle(''); setProjDesc(''); setProjStatus('Ongoing'); setProjProgress(0); setProjImage1(null); setProjImage2(null); e.target.reset();
+      setTimeout(() => setProjSuccess(false), 3000);
+    } catch (error) { alert("Error creating project."); } finally { setPublishingProj(false); }
+  };
+
+  const handleAddPartner = async (e) => {
+    e.preventDefault(); setPublishingPartner(true); setPartnerSuccess(false);
+    try {
+      const logoUrl = await uploadToImgBB(partnerLogo);
+      await addDoc(collection(db, "partners"), { 
+        name: partnerName, link: partnerLink, tier: partnerTier, logo: logoUrl, date: new Date().toISOString()
+      });
+      setPartnerSuccess(true); setPartnerName(''); setPartnerLink(''); setPartnerTier('Bronze'); setPartnerLogo(null); e.target.reset();
+      setTimeout(() => setPartnerSuccess(false), 3000);
+    } catch (error) { alert("Error adding partner."); } finally { setPublishingPartner(false); }
+  };
+
+  const handleArchiveTenure = async () => {
+    if (!window.confirm("Are you sure? This will move all CURRENT executives to the Past Executives archive.")) return;
+    setArchiving(true);
+    try {
+      const q = query(collection(db, "executives"), where("isCurrent", "==", true));
+      const snapshot = await getDocs(q);
+      const updates = snapshot.docs.map(execDoc => updateDoc(doc(db, "executives", execDoc.id), { isCurrent: false }));
+      await Promise.all(updates);
+      alert("Tenure Archived Successfully!");
+    } catch (error) { alert("Error archiving tenure."); } finally { setArchiving(false); }
+  };
+
   if (loading) return <div className="min-h-[60vh] flex justify-center items-center"><Loader2 className="animate-spin text-fupre-navy" size={48} /></div>;
 
-  // Define who gets to see what
   const isPresidentOrAdmin = userRole === 'President' || userRole === 'Executive Admin';
   const canManageNews = userRole === 'Information Director' || isPresidentOrAdmin;
   const canManageEvents = userRole === 'Social Director' || isPresidentOrAdmin;
   const canManageComplaints = userRole === 'Welfare Director' || isPresidentOrAdmin;
+  const canManageExecutives = userRole === 'Information Director' || isPresidentOrAdmin;
+  const canManageProjects = userRole === 'Information Director' || isPresidentOrAdmin;
+  const canManagePartners = userRole === 'Information Director' || isPresidentOrAdmin;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -144,7 +234,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8 mb-12">
-        {/* NEWS MANAGER (Info Director & President) */}
+        {/* NEWS MANAGER */}
         {canManageNews && (
           <div className="bg-fupre-navy text-white rounded-xl p-6 shadow-lg h-fit">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Newspaper className="text-fupre-gold" /> Publish Official News</h2>
@@ -167,7 +257,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* EVENT MANAGER (Social Director & President) */}
+        {/* EVENT MANAGER */}
         {canManageEvents && (
           <div className="bg-fupre-blue text-white rounded-xl p-6 shadow-lg h-fit">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><CalendarDays className="text-fupre-gold" /> Create Upcoming Event</h2>
@@ -180,14 +270,12 @@ export default function AdminDashboard() {
               </div>
               <textarea required rows={2} value={eventDesc} onChange={e => setEventDesc(e.target.value)} placeholder="Description..." className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none resize-none" />
               <input required value={eventPrice} onChange={e => setEventPrice(e.target.value)} placeholder="Ticket Price (e.g., Free or ₦2,000)" className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
-              
               <div className="bg-white/10 p-3 rounded-lg border border-white/20 space-y-2">
-                <p className="text-sm font-semibold text-fupre-gold">Payment Details (For Students)</p>
-                <input value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Bank Name (e.g., Access Bank)" className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
+                <p className="text-sm font-semibold text-fupre-gold">Payment Details</p>
+                <input value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Bank Name" className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
                 <input value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder="Account Number" className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
-                <input value={accountName} onChange={e => setAccountName(e.target.value)} placeholder="Account Name (e.g., FUPRE SUG)" className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
+                <input value={accountName} onChange={e => setAccountName(e.target.value)} placeholder="Account Name" className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
               </div>
-
               <div className="bg-white/10 p-3 rounded-lg border border-white/20">
                 <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-fupre-gold"><ImageIcon size={16} /> Attach Flyer</label>
                 <input type="file" accept="image/*" onChange={e => setEventImage(e.target.files[0])} className="w-full text-sm text-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-fupre-gold file:text-fupre-navy cursor-pointer" />
@@ -198,9 +286,102 @@ export default function AdminDashboard() {
             </form>
           </div>
         )}
+
+        {/* EXECUTIVE MANAGER */}
+        {canManageExecutives && (
+          <div className="bg-gray-800 text-white rounded-xl p-6 shadow-lg h-fit">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2"><UserPlus className="text-fupre-gold" /> Add Executive</h2>
+              <button onClick={handleArchiveTenure} disabled={archiving} className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-700 transition flex items-center gap-2">
+                {archiving ? <Loader2 className="animate-spin" size={14} /> : <><Archive size={14} /> Archive Tenure</>}
+              </button>
+            </div>
+            {execSuccess && <div className="bg-green-500 text-white p-3 rounded-lg mb-4 text-sm flex items-center gap-2"><CheckCircle2 size={16} /> Added!</div>}
+            <form onSubmit={handleAddExecutive} className="grid grid-cols-2 gap-3 text-sm">
+              <input required value={execName} onChange={e => setExecName(e.target.value)} placeholder="Full Name" className="col-span-2 bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
+              <input required value={execPosition} onChange={e => setExecPosition(e.target.value)} placeholder="Position" className="bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
+              <select value={execArm} onChange={e => setExecArm(e.target.value)} className="bg-white text-gray-900 rounded-lg px-3 py-2 outline-none">
+                <option value="Student Executive Council">Student Executive Council</option>
+                <option value="Students Senate House">Students Senate House</option>
+                <option value="Students Judiciary Council">Students Judiciary Council</option>
+              </select>
+              <input value={execLevel} onChange={e => setExecLevel(e.target.value)} placeholder="Level (400L)" className="bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
+              <input value={execDept} onChange={e => setExecDept(e.target.value)} placeholder="Department" className="bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
+              <input value={execWhatsapp} onChange={e => setExecWhatsapp(e.target.value)} placeholder="WhatsApp (23480...)" className="col-span-2 bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
+              
+              <div className="col-span-2 bg-white/10 p-2 rounded-lg border border-white/20">
+                <input type="file" accept="image/*" onChange={e => setExecImage(e.target.files[0])} className="w-full text-xs text-gray-200 file:py-1 file:px-2 file:rounded file:border-0 file:bg-fupre-gold file:text-fupre-navy cursor-pointer" />
+              </div>
+              <button type="submit" disabled={publishingExec} className="col-span-2 bg-fupre-gold text-fupre-navy py-2 rounded-lg font-bold hover:bg-yellow-500 transition flex justify-center items-center gap-2">
+                {publishingExec ? <Loader2 className="animate-spin" size={16} /> : "Add Executive"}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* PROJECT MANAGER */}
+        {canManageProjects && (
+          <div className="bg-fupre-navy text-white rounded-xl p-6 shadow-lg h-fit">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><FolderKanban className="text-fupre-gold" /> Add New Project</h2>
+            {projSuccess && <div className="bg-green-500 text-white p-3 rounded-lg mb-4 text-sm flex items-center gap-2"><CheckCircle2 size={16} /> Project added!</div>}
+            <form onSubmit={handlePublishProject} className="space-y-4">
+              <input required value={projTitle} onChange={e => setProjTitle(e.target.value)} placeholder="Project Title" className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
+              <textarea required rows={3} value={projDesc} onChange={e => setProjDesc(e.target.value)} placeholder="Project Description..." className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none resize-none" />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <select value={projStatus} onChange={e => setProjStatus(e.target.value)} className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none">
+                  <option value="Ongoing">Ongoing</option>
+                  <option value="Completed">Completed</option>
+                </select>
+                {projStatus === 'Ongoing' && (
+                  <input type="number" min="0" max="100" required value={projProgress} onChange={e => setProjProgress(e.target.value)} placeholder="Progress %" className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 outline-none" />
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 bg-white/10 p-3 rounded-lg border border-white/20">
+                <div>
+                  <label className="text-xs font-semibold text-fupre-gold mb-1 block">Image 1 (Main)</label>
+                  <input type="file" accept="image/*" onChange={e => setProjImage1(e.target.files[0])} className="w-full text-xs text-gray-200 file:py-1 file:px-2 file:rounded file:border-0 file:bg-fupre-gold file:text-fupre-navy cursor-pointer" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-fupre-gold mb-1 block">Image 2 (Optional)</label>
+                  <input type="file" accept="image/*" onChange={e => setProjImage2(e.target.files[0])} className="w-full text-xs text-gray-200 file:py-1 file:px-2 file:rounded file:border-0 file:bg-fupre-gold file:text-fupre-navy cursor-pointer" />
+                </div>
+              </div>
+
+              <button type="submit" disabled={publishingProj} className="w-full bg-fupre-gold text-fupre-navy px-6 py-2 rounded-lg font-bold hover:bg-yellow-500 transition flex justify-center items-center gap-2">
+                {publishingProj ? <><Loader2 className="animate-spin" size={18} /> Uploading...</> : <><FolderKanban size={18} /> Publish Project</>}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* PARTNER MANAGER */}
+        {canManagePartners && (
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-lg h-fit">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-fupre-navy"><Handshake className="text-fupre-gold" /> Add Sponsor / Partner</h2>
+            {partnerSuccess && <div className="bg-green-500 text-white p-3 rounded-lg mb-4 text-sm flex items-center gap-2"><CheckCircle2 size={16} /> Partner added!</div>}
+            <form onSubmit={handleAddPartner} className="space-y-4">
+              <input required value={partnerName} onChange={e => setPartnerName(e.target.value)} placeholder="Company Name" className="w-full border rounded-lg px-3 py-2 outline-none focus:border-fupre-navy" />
+              <input required value={partnerLink} onChange={e => setPartnerLink(e.target.value)} placeholder="Website Link (https://...)" className="w-full border rounded-lg px-3 py-2 outline-none focus:border-fupre-navy" />
+              <select value={partnerTier} onChange={e => setPartnerTier(e.target.value)} className="w-full border rounded-lg px-3 py-2 outline-none focus:border-fupre-navy bg-white">
+                <option value="Bronze">Bronze Partner</option>
+                <option value="Silver">Silver Partner</option>
+                <option value="Gold">Gold Partner</option>
+              </select>
+              <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700"><ImageIcon size={16} /> Upload Logo</label>
+                <input type="file" accept="image/*" onChange={e => setPartnerLogo(e.target.files[0])} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-fupre-navy file:text-white cursor-pointer" />
+              </div>
+              <button type="submit" disabled={publishingPartner} className="w-full bg-fupre-navy text-white px-6 py-2 rounded-lg font-bold hover:bg-fupre-light transition flex justify-center items-center gap-2">
+                {publishingPartner ? <><Loader2 className="animate-spin" size={18} /> Uploading...</> : "Add Partner"}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
 
-      {/* TICKET BOOKINGS (Social Director & President) */}
+      {/* TICKET BOOKINGS */}
       {canManageEvents && (
         <>
           <div className="mb-6 flex items-center gap-2 border-t pt-8">
@@ -232,7 +413,7 @@ export default function AdminDashboard() {
         </>
       )}
 
-      {/* COMPLAINTS (Welfare Director & President) */}
+      {/* COMPLAINTS */}
       {canManageComplaints && (
         <>
           <div className="mb-6 flex items-center gap-2 border-t pt-8">
